@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>KrainaSurvivalu.Launcher</AssemblyName>
+    <RootNamespace>KrainaSurvivalu.Launcher.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Branding/ks-launcher.ico</ApplicationIcon>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../KrainaSurvivalu.Launcher.Core/KrainaSurvivalu.Launcher.Core.csproj" />
+    <Resource Include="Assets/Servers/*.png" />
+    <Resource Include="Assets/Branding/ks-launcher.ico" />
+    <Resource Include="Assets/Branding/ks-launcher.png" />
+    <Content Include="../../config/servers.json" Link="config/servers.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../config/community.json" Link="config/community.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../config/updates.json" Link="config/updates.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

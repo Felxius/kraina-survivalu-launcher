@@ -1,0 +1,24 @@
+<UserControl x:Class="KrainaSurvivalu.Launcher.App.Views.ServerCard" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <Border Style="{StaticResource Panel}" Margin="0,0,12,0" ClipToBounds="True">
+  <StackPanel>
+   <Border Height="170" CornerRadius="9,9,0,0" ClipToBounds="True">
+    <Grid>
+     <Image x:Name="ServerBanner" Stretch="UniformToFill" VerticalAlignment="Center" ToolTip="Grafika promocyjna inspirowana klimatem serwera.">
+      <Image.Style><Style TargetType="Image"><Setter Property="Source" Value="/Assets/Servers/badlands-v2.png"/><Style.Triggers><DataTrigger Binding="{Binding Id}" Value="deer-isle"><Setter Property="Source" Value="/Assets/Servers/deer-isle-v1.png"/></DataTrigger></Style.Triggers></Style></Image.Style>
+     </Image>
+     <Border><Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#40000000" Offset="0"/><GradientStop Color="#08000000" Offset="0.5"/><GradientStop Color="#BB101710" Offset="1"/></LinearGradientBrush></Border.Background></Border>
+     <Grid Margin="20,15"><TextBlock Text="{Binding Code}" Style="{StaticResource Eyebrow}"/><Border Background="#D0161D14" Padding="9,5" CornerRadius="4" HorizontalAlignment="Left" VerticalAlignment="Bottom"><StackPanel Orientation="Horizontal"><Ellipse Width="5" Height="5" Margin="0,0,7,0"><Ellipse.Style><Style TargetType="Ellipse"><Setter Property="Fill" Value="#9DA58E"/><Style.Triggers><DataTrigger Binding="{Binding IsOnline}" Value="True"><Setter Property="Fill" Value="#ABBE7F"/></DataTrigger><DataTrigger Binding="{Binding IsChecking}" Value="True"><Setter Property="Fill" Value="#DBC486"/></DataTrigger></Style.Triggers></Style></Ellipse.Style></Ellipse><TextBlock x:Name="ServerStatusText" ToolTip="{Binding QueryDetails}" Text="{Binding StatusText}" FontSize="9" Foreground="#CCD2C1"/></StackPanel></Border><TextBlock Text="KS / DAYZ" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="9" Foreground="#CCD2C1"/></Grid>
+    </Grid>
+   </Border>
+   <StackPanel Margin="22,19,22,21">
+    <TextBlock Text="{Binding Description}" Style="{StaticResource Eyebrow}" FontSize="9" Foreground="{StaticResource DimBrush}"/>
+    <TextBlock Text="{Binding Name}" FontSize="29" FontWeight="SemiBold" Margin="0,5,0,3"/>
+    <TextBlock Text="{Binding Endpoint}" FontFamily="Consolas" FontSize="12" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="ServerMapText" Text="{Binding MapMessage}" Foreground="{StaticResource DimBrush}" FontSize="10" Margin="0,7,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+    <Grid Margin="0,20,0,15"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="GRACZE" Style="{StaticResource Eyebrow}" Foreground="{StaticResource DimBrush}"/><TextBlock x:Name="ServerPlayerCountText" Text="{Binding PlayerCount}" Margin="0,4,0,0" FontSize="19" FontWeight="SemiBold"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="POŁĄCZENIE" Style="{StaticResource Eyebrow}" Foreground="{StaticResource DimBrush}"/><TextBlock x:Name="ServerQueryMessageText" ToolTip="{Binding QueryDetails}" Text="{Binding QueryMessage}" FontSize="11" Margin="0,6,0,0" Foreground="{StaticResource MutedBrush}"/></StackPanel></Grid>
+    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0"><TextBlock Text="{Binding ModsMessage}" Style="{StaticResource Muted}"/></Border>
+    <Grid Margin="0,15,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Button x:Name="PlayButton" Content="GRAJ" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" Style="{StaticResource PrimaryButton}" ToolTip="{Binding PlayUnavailableReason}" AutomationProperties.Name="{Binding Name, StringFormat=Graj na serwerze {0}}"/><Button Grid.Column="1" Content="MODY" Command="{Binding OpenModsCommand}" Margin="9,0,0,0"/></Grid>
+    <TextBlock x:Name="ServerLastCheckedText" Text="{Binding LastCheckedMessage}" Foreground="{StaticResource DimBrush}" FontSize="9" Margin="0,9,0,0"/><Button Content="KOPIUJ ADRES" Command="{Binding CopyAddressCommand}" Margin="0,9,0,0" Background="Transparent" BorderThickness="0" Foreground="{StaticResource DimBrush}" Padding="8,5" FontSize="9"/>
+   </StackPanel>
+  </StackPanel>
+ </Border>
+</UserControl>

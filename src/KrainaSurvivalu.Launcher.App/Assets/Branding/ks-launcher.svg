@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Kraina Survivalu Launcher â€” monogram KS</title>
+  <desc>Original vector emblem: olive KS monogram on a dark rounded badge. No external artwork or fonts.</desc>
+  <defs><linearGradient id="panel" x1="60" y1="32" x2="460" y2="480" gradientUnits="userSpaceOnUse"><stop stop-color="#202C1E"/><stop offset="1" stop-color="#101710"/></linearGradient></defs>
+  <rect x="24" y="24" width="464" height="464" rx="94" fill="url(#panel)" stroke="#738851" stroke-width="7"/>
+  <rect x="43" y="43" width="426" height="426" rx="77" fill="none" stroke="#34452D" stroke-width="2"/>
+  <path fill="#BDCF91" d="M104 150H146V231L207 150H257L181 251L261 362H209L146 274V362H104Z"/>
+  <path fill="#BDCF91" d="M402 150H323C296 150 283 164 283 190V222C283 247 298 259 319 266L351 277C358 280 361 284 361 292V311C361 321 357 325 347 325H283V362H349C386 362 403 343 403 307V283C403 255 389 242 367 234L335 223C328 221 325 217 325 211V199C325 190 329 187 337 187H402Z"/>
+  <path fill="#7D9558" d="M214 90H298V98H214ZM214 410H298V418H214Z"/>
+</svg>
