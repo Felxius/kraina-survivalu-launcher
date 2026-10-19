@@ -1,0 +1,59 @@
+name: Przygotuj wydanie launchera
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer bez prefiksu v, np. 1.0.0'
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    environment: release
+    steps:
+      - name: Pobierz źródła
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Sprawdź wersję i klucz
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          UPDATE_PRIVATE_KEY: ${{ secrets.KS_UPDATE_PRIVATE_KEY_PEM }}
+        run: |
+          if ($env:RELEASE_VERSION -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$') { throw 'Nieprawidłowa wersja' }
+          if ([string]::IsNullOrWhiteSpace($env:UPDATE_PRIVATE_KEY)) { throw 'Brak sekretu KS_UPDATE_PRIVATE_KEY_PEM' }
+          $key = [Security.Cryptography.ECDsa]::Create()
+          try {
+            $key.ImportFromPem($env:UPDATE_PRIVATE_KEY)
+            $parts = $env:GITHUB_REPOSITORY.Split('/')
+            $config = @{ gitHubOwner = $parts[0]; gitHubRepository = $parts[1]; publicKeyPem = $key.ExportSubjectPublicKeyInfoPem() }
+            $config | ConvertTo-Json | Set-Content config/updates.json -Encoding utf8NoBOM
+          } finally { $key.Dispose() }
+      - name: Testy i publikacja aplikacji
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          ./scripts/Build.ps1 -DotNetPath (Get-Command dotnet).Source -Version $env:RELEASE_VERSION -Publish -PublishDirectory artifacts/release-app
+          if ($LASTEXITCODE -ne 0) { throw 'Błąd budowania aplikacji' }
+      - name: Podpisz manifest i przygotuj szkic wydania
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          UPDATE_PRIVATE_KEY: ${{ secrets.KS_UPDATE_PRIVATE_KEY_PEM }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $privatePath = Join-Path $env:RUNNER_TEMP 'ks-update-private.pem'
+          try {
+            [IO.File]::WriteAllText($privatePath, $env:UPDATE_PRIVATE_KEY)
+            ./scripts/New-ReleaseUpdate.ps1 -PublishDirectory artifacts/release-app -Version $env:RELEASE_VERSION -PrivateKeyPath $privatePath -OutputDirectory artifacts/release-assets
+            gh release create "v$env:RELEASE_VERSION" artifacts/release-assets/KS-Launcher-Windows-x64.zip artifacts/release-assets/KS-Launcher-update.json --draft --title "Kraina Survivalu $env:RELEASE_VERSION" --notes 'Wydanie przygotowane automatycznie. Administrator: sprawdź paczkę i uzupełnij opis przed publikacją.'
+            if ($LASTEXITCODE -ne 0) { throw 'Nie utworzono szkicu wydania' }
+          } finally { if (Test-Path -LiteralPath $privatePath) { Remove-Item -LiteralPath $privatePath -Force } }
