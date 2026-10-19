@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <Version>0.6.0</Version>
+    <InformationalVersion>0.6.0-alpha</InformationalVersion>
+    <Authors>Kraina Survivalu</Authors>
+    <Company>Kraina Survivalu</Company>
+    <Copyright>Kraina Survivalu</Copyright>
+  </PropertyGroup>
+</Project>

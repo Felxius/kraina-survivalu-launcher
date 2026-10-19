@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "servers": [
+    {
+      "id": "badlands",
+      "name": "Badlands",
+      "host": "145.239.237.112",
+      "gamePort": 27800,
+      "queryPort": 27801,
+      "requiredWorkshopIds": null,
+      "discordUrl": null,
+      "rulesUrl": null,
+      "newsUrl": null
+    },
+    {
+      "id": "deer-isle",
+      "name": "Deer Isle",
+      "host": "178.95.158.100",
+      "gamePort": 23000,
+      "queryPort": 9000,
+      "requiredWorkshopIds": null,
+      "discordUrl": null,
+      "rulesUrl": null,
+      "newsUrl": null
+    }
+  ]
+}
