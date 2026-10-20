@@ -1,8 +1,8 @@
 # Kraina Survivalu Launcher
 
-Launcher Windows dla serwerów DayZ Kraina Survivalu. C#, .NET 10, WPF; etap `0.6.0-alpha`.
+Launcher Windows dla serwerów DayZ Kraina Survivalu. C#, .NET 10, WPF; etap `0.7.0-alpha`.
 
-Wersja 0.6 dodaje sprawdzanie i synchronizację modów Steam Workshop na komputerze gracza oraz przygotowany mechanizm aktualizacji launchera przez GitHub Releases. Każdy serwer ma własną listę odczytywaną na bieżąco. **GRAJ i uruchamianie DayZ pozostają niedostępne** w tym etapie.
+Wersja 0.7 dodaje **GRAJ**: sprawdzenie aktualnych wymagań wybranego serwera, synchronizację brakujących modów i aktualizacji na komputerze gracza oraz uruchomienie DayZ przez BattlEye z zapisanym nickiem. Odczyt listy jest ponawiany po synchronizacji. Błąd, nierozpoznane ID Workshop lub niegotowe pliki wstrzymują start. Potwierdzenie uruchomienia procesu nie oznacza jeszcze połączenia z serwerem.
 
 Interfejs zachowuje ciemny, oliwkowy wygląd, ikonę, ilustracje serwerów, lokalny nick, ustawienia ścieżek, Discord i oryginalny regulamin w dziewięciu rozdziałach. Aktualności nie mają zakładki, edytora ani hostowanego feeda.
 
@@ -21,7 +21,7 @@ Rozpakuj **cały folder** publikacji Windows x64, zachowując `config`, `SteamWo
 
 W **Ustawieniach** wskaż folder DayZ zawierający `DayZ_x64.exe` i `DayZ_BE.exe` oraz właściwy plik `steam.exe`. Uruchom Steam i zaloguj się na konto posiadające DayZ. Steam i launcher powinny działać jako ten sam użytkownik, na tym samym poziomie uprawnień. Kroki i rozwiązywanie problemów opisuje [URUCHOMIENIE.md](docs/URUCHOMIENIE.md).
 
-Nick zostaje zapisany lokalnie; nie jest jeszcze przekazywany do gry. Może mieć 1–32 znaki Unicode: litery, cyfry, znaki diakrytyczne, zwykłe spacje wewnętrzne i `_ - [ ] ( )`. `Survivor`, cudzysłowy i znaki sterujące są odrzucane.
+Nick zostaje zapisany lokalnie i jest przekazywany do DayZ po użyciu GRAJ. Może mieć 1–32 znaki Unicode: litery, cyfry, znaki diakrytyczne, zwykłe spacje wewnętrzne i `_ - [ ] ( )`. `Survivor`, cudzysłowy i znaki sterujące są odrzucane.
 
 ## Mody na komputerze gracza
 
@@ -41,7 +41,7 @@ Pomocnik korzysta z biblioteki Valve z zainstalowanego DayZ. Paczka nie zawiera 
 
 Przygotowano GitHub Releases: sprawdzanie nowej wersji, pobieranie, podpis manifestu ECDSA P-256, kontrolę rozmiaru i SHA-256 oraz pomocnika wymiany plików z kopią zapasową. Po skonfigurowaniu źródła launcher automatycznie sprawdza i pobiera nowszą wersję. Instalację uruchamia gracz przyciskiem **ZAINSTALUJ I URUCHOM PONOWNIE**; gra i Steam nie są zamykane.
 
-W konfiguracji roboczego projektu wskazano `Felxius/kraina-survivalu-launcher` oraz wygenerowany publiczny klucz aktualizacji. Klucz prywatny pozostaje poza projektem. Źródła trzeba jeszcze przesłać, skonfigurować sekret wydawania i przygotować pierwsze wydanie; niczego dotąd nie opublikowano. Wcześniejszy ZIP `0.6.0-alpha-Windows-x64` zachowuje swoją pustą konfigurację i wymaga później ręcznego przejścia na pierwszą skonfigurowaną paczkę. Instrukcje: [AKTUALIZACJE.md](docs/AKTUALIZACJE.md).
+W konfiguracji roboczego projektu wskazano `Felxius/kraina-survivalu-launcher` oraz wygenerowany publiczny klucz aktualizacji. Klucz prywatny pozostaje poza projektem. Źródła i sekret środowiska `release` zostały skonfigurowane. GitHub zbudował robocze wydanie 0.6.1-alpha; pobrany podpis manifestu i cała paczka przeszły weryfikację. Sam szkic wydania nie jest publiczną aktualizacją. Wcześniejszy ZIP `0.6.0-alpha-Windows-x64` zachowuje swoją pustą konfigurację i wymaga później ręcznego przejścia na pierwszą skonfigurowaną paczkę. Instrukcje: [AKTUALIZACJE.md](docs/AKTUALIZACJE.md).
 
 Podpis manifestu aktualizacji i podpis wydawcy Windows to różne mechanizmy. Alpha nie ma podpisu Authenticode; nie ma gwarancji braku ostrzeżeń SmartScreen lub antywirusa. Zobacz [PODPISYWANIE.md](docs/PODPISYWANIE.md).
 
@@ -73,7 +73,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1 -Publish
 
 Skrypt poda świeży folder publikacji. Zawiera aplikację, runtime, trzy pliki `config/servers.json`, `config/community.json`, `config/updates.json` i osobne foldery `SteamWorker` oraz `Updater`, również self-contained. WPF publikujemy bez trimming. Więcej: [publikacja .NET](https://learn.microsoft.com/en-us/dotnet/core/deploying/) i [ograniczenie trimming dla WPF](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities#wpf).
 
-Opcjonalne parametry: `-DotNetPath 'C:\Narzedzia\dotnet10\dotnet.exe'`, `-PublishDirectory 'C:\Wydania\Launcher-0.6'`, `-Version '0.6.0-alpha'`, `-RestoreConfigFile 'C:\Narzedzia\NuGet.Offline.Config'`. Folder publikacji musi być pusty. Ścieżki ze spacjami zapisuj w cudzysłowach. Skrypty obsługują też `DOTNET_ROOT` i SDK z `PATH`.
+Opcjonalne parametry: `-DotNetPath 'C:\Narzedzia\dotnet10\dotnet.exe'`, `-PublishDirectory 'C:\Wydania\Launcher-0.7'`, `-Version '0.7.0-alpha'`, `-RestoreConfigFile 'C:\Narzedzia\NuGet.Offline.Config'`. Folder publikacji musi być pusty. Ścieżki ze spacjami zapisuj w cudzysłowach. Skrypty obsługują też `DOTNET_ROOT` i SDK z `PATH`.
 
 ## Testy i granice weryfikacji
 
@@ -92,7 +92,7 @@ Test WPF renderuje okno i sprawdza zachowanie z atrapami usług:
 dotnet run --project .\src\KrainaSurvivalu.Launcher.App\KrainaSurvivalu.Launcher.App.csproj -- --ui-smoke '.\artifacts\ui-smoke'
 ```
 
-Wymaga sesji Windows z działającym pulpitem. Wyniki 0.6 należy odczytać z raportów danego wydania; wyniki 0.5 nie są weryfikacją 0.6. Rzeczywisty odczyt z zalogowanego Steam został sprawdzony osobno; pobieranie pozostaje testem ręcznym. Produkcyjny odczyt UDP potwierdza odpowiedź tylko w chwili wykonania. Instalator i aktualizacja między opublikowanymi wydaniami wymagają oddzielnego sprawdzenia. Zobacz [TESTOWANIE.md](docs/TESTOWANIE.md).
+Wymaga sesji Windows z działającym pulpitem. Wyniki 0.7 należy odczytać z raportów tego wydania; wyniki wcześniejszych paczek nie zastępują tej kontroli. Rzeczywisty odczyt z zalogowanego Steam został sprawdzony osobno; pobieranie i wejście do gry pozostają testem ręcznym. Produkcyjny odczyt UDP potwierdza odpowiedź tylko w chwili wykonania. Instalator i aktualizacja między opublikowanymi wydaniami wymagają oddzielnego sprawdzenia. Zobacz [TESTOWANIE.md](docs/TESTOWANIE.md).
 
 ## Wygenerowanie instalatora EXE
 
@@ -102,11 +102,11 @@ Zainstaluj [Inno Setup 6](https://jrsoftware.org/isinfo.php) i podaj rzeczywist�
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Installer.ps1 -IsccPath 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
 ```
 
-Skrypt buduje, testuje, publikuje pełny folder i kompiluje `installer/setup.iss`. Nie uruchamia instalatora. Wynik dla 0.6:
+Skrypt buduje, testuje, publikuje pełny folder i kompiluje `installer/setup.iss`. Nie uruchamia instalatora. Przykładowy wynik dla 0.7:
 
 ```text
-artifacts\installer\KrainaSurvivalu-Launcher-Setup-0.6.0-alpha-win-x64.exe
-artifacts\installer\KrainaSurvivalu-Launcher-Setup-0.6.0-alpha-win-x64.exe.sha256
+artifacts\installer\KrainaSurvivalu-Launcher-Setup-0.7.0-alpha-win-x64.exe
+artifacts\installer\KrainaSurvivalu-Launcher-Setup-0.7.0-alpha-win-x64.exe.sha256
 ```
 
 Instalator działa dla bieżącego użytkownika bez wymagania administratora, domyślnie w `%LOCALAPPDATA%\Programs\KrainaSurvivalu\Launcher`, i dostarcza skrót Start oraz dezinstalator. Skrót pulpitu jest opcjonalny. Stały AppId pozwala zachować ustawienia przy ponownej instalacji. Więcej: [uprawnienia Inno Setup](https://jrsoftware.org/ishelp/topic_setup_privilegesrequired.htm) i [kompilator](https://jrsoftware.org/ishelp/topic_compilercmdline.htm). Przygotowany skrypt nie oznacza, że instalator tego wydania został już skompilowany i sprawdzony na czystym Windows.

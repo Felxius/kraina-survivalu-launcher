@@ -1,6 +1,6 @@
-# Wykrywanie i synchronizacja modów w 0.6
+# Wykrywanie i synchronizacja modów w 0.7
 
-Na stronie modów launcher odczytuje nazwy i ID zgłaszane przez wybrany serwer. Odczyt rozpoczyna się po otwarciu tej strony; przycisk odświeżania pozwala wykonać go ponownie. Badlands i Deer Isle mają osobne wyniki. Sam odczyt nie subskrybuje ani nie pobiera modów. W etapie 0.6 dodano osobne zadania sprawdzenia i synchronizacji Workshop na komputerze gracza. Uruchamianie DayZ pozostaje niedostępne.
+Na stronie modów launcher odczytuje nazwy i ID zgłaszane przez wybrany serwer. Odczyt rozpoczyna się po otwarciu tej strony; przycisk odświeżania pozwala wykonać go ponownie. Badlands i Deer Isle mają osobne wyniki. Sam odczyt nie subskrybuje ani nie pobiera modów. W etapie 0.6 dodano osobne zadania sprawdzenia i synchronizacji Workshop na komputerze gracza. Wersja 0.7 używa tej samej synchronizacji także po naciśnięciu GRAJ, przed uruchomieniem DayZ.
 
 `requiredWorkshopIds: null` w `config/servers.json` pozostaje bez zmian. To brak zatwierdzonej listy statycznej, a nie serwer bez modów. Wynik odczytu jest przechowywany osobno w pamięci i ma czas sprawdzenia. Po nieudanym odświeżeniu stare pozycje nie mogą wyglądać jak nowy, prawidłowy wynik.
 
@@ -12,7 +12,7 @@ Na stronie modów launcher odczytuje nazwy i ID zgłaszane przez wybrany serwer.
 - Odebranie i złożenie wszystkich stron pakietu potwierdza transmisję. Nie jest gwarancją, że serwer ujawnił całą listę potrzebną do gry.
 - Brak odpowiedzi, nieobsługiwany format lub błąd odczytu oznacza brak nowej listy, a nie pustą, poprawną listę modów.
 
-Rozpoznane dodatnie ID można sprawdzić i synchronizować także wtedy, gdy cała lista pozostaje niepotwierdzona. ID 0 jest nadal widoczne jako nierozpoznane i nie może zniknąć z oceny wyniku. Flaga `0x08` nie jest automatycznie opisywana jako „ucięta lista” — nie ma potwierdzonej interpretacji. Przycisk GRAJ pozostaje niedostępny; gotowość odczytanych pozycji nie dowodzi kompletności wszystkich wymagań.
+Rozpoznane dodatnie ID można sprawdzić i synchronizować także wtedy, gdy cała lista pozostaje niepotwierdzona. ID 0 jest nadal widoczne jako nierozpoznane i nie może zniknąć z oceny wyniku. Flaga `0x08` nie jest automatycznie opisywana jako „ucięta lista” — nie ma potwierdzonej interpretacji. GRAJ blokuje start przy ID 0. Sama nieznana flaga nie ma potwierdzonego znaczenia: po synchronizacji wszystkich dodatnich ID launcher pozwala podjąć próbę wejścia, zachowując ostrzeżenie o niepotwierdzonej kompletności. Nie przedstawia tego jako udanego połączenia.
 
 ## Sprawdzanie i pobieranie przez Steam
 
@@ -30,7 +30,7 @@ Potrzebne są poprawnie wskazane DayZ i Steam, działający oraz zalogowany Stea
 
 Osobny proces `SteamWorker` ładuje bibliotekę Valve `steam_api64.dll` z wybranej, zainstalowanej kopii DayZ. Launcher nie rozprowadza tej DLL, nie dostarcza `steam_appid.txt` i nie wymaga danych logowania. Kontekst aplikacji ustawiany jest wyłącznie dla procesu pomocnika; nie zmienia globalnego środowiska Steam. Dostęp do sesji Steam w takim pomocniku wymaga testu na docelowym Windows — nie stanowi gwarantowanego kontraktu Valve dla każdego zewnętrznego launchera.
 
-Testy automatyczne logiki i UI używają atrap. Próba natywnego odczytu w odizolowanym środowisku narzędziowym nie widziała działającego Steam mimo potwierdzenia użytkownika, więc nie potwierdziła integracji i nie uruchamiała pobierania. Sprawdzenie rzeczywistych plików oraz aktualizacji na komputerze gracza pozostaje osobnym testem pełnej paczki. Instrukcje: [URUCHOMIENIE.md](URUCHOMIENIE.md).
+Testy automatyczne logiki i UI używają atrap. Próba natywnego odczytu w odizolowanym środowisku narzędziowym nie widziała działającego Steam mimo potwierdzenia użytkownika, więc nie potwierdziła integracji i nie uruchamiała pobierania. Osobny odczyt pomocnika uruchomionego przez użytkownika potwierdził stan CF i niezmieniony manifest Workshop. Sprawdzenie pobierania, aktualizacji i startu DayZ na komputerze gracza pozostaje osobnym testem pełnej paczki. Instrukcje: [URUCHOMIENIE.md](URUCHOMIENIE.md).
 
 Semantykę subskrypcji, stanów i wyników pobierania opisuje [oficjalna dokumentacja ISteamUGC](https://partner.steamgames.com/doc/api/isteamugc?language=english).
 

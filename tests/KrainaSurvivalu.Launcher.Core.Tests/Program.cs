@@ -190,6 +190,7 @@ try
     await ServerQueryTests.RunAsync(Test);
     await ServerModsQueryTests.RunAsync(Test);
     await WorkshopPreparationTests.RunAsync(testDirectory, Test);
+    await DayZPlayTests.RunAsync(testDirectory, Test);
 }
 finally
 {

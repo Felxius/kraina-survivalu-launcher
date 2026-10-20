@@ -2,7 +2,7 @@
 param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
     [string]$DotNetPath,
-    [ValidatePattern('^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')][string]$Version = '0.6.0-alpha',
+    [ValidatePattern('^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')][string]$Version = '0.7.0-alpha',
     [string]$RestoreConfigFile,
     [switch]$Publish,
     [switch]$SkipTests,

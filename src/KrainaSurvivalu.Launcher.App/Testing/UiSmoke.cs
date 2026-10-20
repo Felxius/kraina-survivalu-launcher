@@ -39,6 +39,7 @@ public static class UiSmoke
         var workshopClient = vm.WorkshopClient as FakeWorkshopClient;
         var launcherUpdateService = vm.LauncherUpdateService as FakeLauncherUpdateService;
         var launcherUpdateApplier = vm.LauncherUpdateApplier.Target as RecordingLauncherUpdateApplier;
+        var gameProcessLauncher = vm.GameProcessLauncher as RecordingGameProcessLauncher;
         var workshopClientIsFake = workshopClient is not null;
         var launcherUpdateServiceIsFake = launcherUpdateService is not null;
         var launcherUpdateApplierIsRecording = launcherUpdateApplier is not null;
@@ -46,6 +47,7 @@ public static class UiSmoke
         var serverModsBindingEvidence = new List<object>();
         var workshopBindingEvidence = new List<object>();
         var launcherUpdateBindingEvidence = new List<object>();
+        var playBindingEvidence = new List<object>();
         var literalOriginalRules = false;
         var imageResources = new List<object>();
         var embeddedAssetSha256 = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -272,7 +274,7 @@ public static class UiSmoke
             closingQueryService.HoldResponses();
             using (var closingViewModel = new MainViewModel(Path.Combine(directory, "sandbox", "query-cancellation", "settings.json"),
                 new RecordingLinkOpener(), closingQueryService, new FakeServerModsQueryService(), new FakeWorkshopClient(),
-                new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply))
+                new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply, gameProcessLauncher: new RecordingGameProcessLauncher()))
             {
                 await closingViewModel.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
                 var closingRefresh = closingViewModel.RefreshServerStatusAsync();
@@ -409,7 +411,7 @@ public static class UiSmoke
             closingModsService.HoldResponses();
             using (var closingModsViewModel = new MainViewModel(Path.Combine(directory, "sandbox", "mods-cancellation", "settings.json"),
                 new RecordingLinkOpener(), new FakeServerQueryService(), closingModsService, new FakeWorkshopClient(),
-                new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply))
+                new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply, gameProcessLauncher: new RecordingGameProcessLauncher()))
             {
                 await closingModsViewModel.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
                 var pendingMods = Task.WhenAll(closingModsViewModel.Servers.Select(server => closingModsViewModel.RefreshServerModsAsync(server)));
@@ -531,7 +533,8 @@ public static class UiSmoke
                 "Both path controls and the shared Unicode nickname propagate edited values");
             await vm.SaveSettingsAsync();
             using var reloaded = new MainViewModel(vm.SettingsPath, new RecordingLinkOpener(), new FakeServerQueryService(), new FakeServerModsQueryService(),
-                new FakeWorkshopClient(), new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply);
+                new FakeWorkshopClient(), new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply,
+                gameProcessLauncher: new RecordingGameProcessLauncher());
             await reloaded.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
             playerNameRoundTripVerified = reloaded.DayZDirectory == dayz && reloaded.SteamExecutable == steam &&
                 reloaded.PlayerName == playerName && reloaded.CurrentSettings.PlayerName == playerName &&
@@ -587,8 +590,8 @@ public static class UiSmoke
             var inspectedStatuses = Descendants<TextBlock>(localModsList).Where(text => text.Name == "LocalModStatusText").Select(text => text.Text).ToArray();
             Check(workshopClient.InspectCount == 1 && workshopClient.SynchronizeCount == 0 && localModsList.Items.Count == 2 &&
                 inspectedStatuses.SequenceEqual(new[] { "Wymaga aktualizacji", "Brak na komputerze" }) &&
-                deerIsle.LocalWorkshopItems.All(item => !item.IsReady) && !deerIsle.CanPlay,
-                "The actual inspect command displays official-style NeedsUpdate and missing states without subscribing, downloading or enabling GRAJ");
+                deerIsle.LocalWorkshopItems.All(item => !item.IsReady) && deerIsle.CanPlay && gameProcessLauncher?.Plans.Count == 0,
+                "The inspect command displays NeedsUpdate and missing states without downloading or launching; GRAJ is a fresh preparation request, not cached readiness");
             workshopBindingEvidence.Add(new { stage = "inspect-fixture", server = deerIsle.Id, statuses = inspectedStatuses,
                 inspectCalls = workshopClient.InspectCount, synchronizeCalls = workshopClient.SynchronizeCount });
 
@@ -636,7 +639,7 @@ public static class UiSmoke
                 deerIsle.WorkshopPreparation is { ServerListStable: true, AllAdvertisedItemsReady: true, HasCompleteReadyMetadata: false } &&
                 deerIsle.LocalWorkshopItems.All(item => item.IsReady) && localModsList.Items.Count == 2 &&
                 Named<TextBlock>(surface, "LocalWorkshopSummaryText").Text.Contains("Kompletność", StringComparison.Ordinal) &&
-                badlands.LocalWorkshopItems.Count == 0 && vm.Servers.All(server => !server.CanPlay),
+                badlands.LocalWorkshopItems.Count == 0 && gameProcessLauncher?.Plans.Count == 0,
                 "Synchronization rechecks changed server requirements, prepares the new IDs, retains per-server state and never treats unknown flags as complete metadata");
             workshopBindingEvidence.Add(new { stage = "changed-list-ready-fixture", server = deerIsle.Id,
                 calls = synchronizedCalls, finalIds = deerIsle.WorkshopMods.Select(mod => mod.WorkshopId).ToArray(),
@@ -678,7 +681,7 @@ public static class UiSmoke
             closingWorkshopClient.HoldResponses();
             using (var closingWorkshopVm = new MainViewModel(Path.Combine(directory, "sandbox", "workshop-cancellation", "settings.json"),
                 new RecordingLinkOpener(), new FakeServerQueryService(), new FakeServerModsQueryService(), closingWorkshopClient,
-                new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply))
+                new FakeLauncherUpdateService(), new RecordingLauncherUpdateApplier().Apply, gameProcessLauncher: new RecordingGameProcessLauncher()))
             {
                 await closingWorkshopVm.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
                 closingWorkshopVm.DayZDirectory = dayz;
@@ -698,17 +701,18 @@ public static class UiSmoke
 
             var configuredUpdates = new UpdateConfiguration { GitHubOwner = "TEST-ONLY", GitHubRepository = "TEST-ONLY", PublicKeyPem = "TEST-ONLY-NOT-A-REAL-KEY" };
             var updateDescriptor = new LauncherUpdateDescriptor(configuredUpdates, new("TEST-ONLY", "TEST-ONLY"),
-                new(1, "0.6.1-alpha", UpdateConfiguration.ArchiveAssetName, 1000, new string('0', 64), DateTimeOffset.UtcNow),
+                new(1, "0.7.1-alpha", UpdateConfiguration.ArchiveAssetName, 1000, new string('0', 64), DateTimeOffset.UtcNow),
                 new Uri("https://example.invalid/TEST-ONLY.zip"));
             var configuredUpdateService = new FakeLauncherUpdateService
             {
-                CheckResult = new(LauncherUpdateState.Available, "TEST — dostępna kontrolowana aktualizacja.", updateDescriptor)
+                CheckResult = new(LauncherUpdateState.Available, "TEST — dostępna kontrolowana aktualizacja.", updateDescriptor),
+                StagedResult = new(updateDescriptor.Manifest.Version, "TEST-ONLY/receipt.json", "TEST-ONLY/staged-update")
             };
             configuredUpdateService.HoldDownload();
             var configuredApplier = new RecordingLauncherUpdateApplier();
             using (var updateVm = new MainViewModel(Path.Combine(directory, "sandbox", "updates-configured", "settings.json"),
                 new RecordingLinkOpener(), new FakeServerQueryService(), new FakeServerModsQueryService(), new FakeWorkshopClient(),
-                configuredUpdateService, configuredApplier.Apply, configuredUpdates))
+                configuredUpdateService, configuredApplier.Apply, configuredUpdates, new RecordingGameProcessLauncher()))
             {
                 await updateVm.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
                 updateVm.Page = "Settings";
@@ -740,7 +744,7 @@ public static class UiSmoke
                 var applyButton = window.FindName("ApplyLauncherUpdateButton").As<Button>();
                 Check(updateVm.IsLauncherUpdateReady && applyButton.IsEnabled &&
                     Named<ProgressBar>(surface, "LauncherUpdateProgressBar").Value == 100 && configuredApplier.AppliedUpdates.Count == 0 &&
-                    Named<TextBlock>(surface, "LauncherUpdateMessageText").Text.Contains("0.6.1-alpha", StringComparison.Ordinal),
+                    Named<TextBlock>(surface, "LauncherUpdateMessageText").Text.Contains("0.7.1-alpha", StringComparison.Ordinal),
                     "A successfully staged update waits for the actual install-and-restart command instead of replacing files automatically");
                 configuredApplier.FailNextApply = true;
                 applyButton.Command!.Execute(applyButton.CommandParameter);
@@ -757,7 +761,7 @@ public static class UiSmoke
             var failedUpdateService = new FakeLauncherUpdateService { CheckError = new InvalidDataException("TEST — podpis aktualizacji odrzucony.") };
             using (var failedUpdateVm = new MainViewModel(Path.Combine(directory, "sandbox", "updates-failure", "settings.json"),
                 new RecordingLinkOpener(), new FakeServerQueryService(), new FakeServerModsQueryService(), new FakeWorkshopClient(),
-                failedUpdateService, new RecordingLauncherUpdateApplier().Apply, configuredUpdates))
+                failedUpdateService, new RecordingLauncherUpdateApplier().Apply, configuredUpdates, new RecordingGameProcessLauncher()))
             {
                 await failedUpdateVm.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
                 failedUpdateVm.Page = "Settings";
@@ -789,7 +793,7 @@ public static class UiSmoke
             cancelledUpdateService.HoldDownload();
             using (var cancelledUpdateVm = new MainViewModel(Path.Combine(directory, "sandbox", "updates-cancellation", "settings.json"),
                 new RecordingLinkOpener(), new FakeServerQueryService(), new FakeServerModsQueryService(), new FakeWorkshopClient(),
-                cancelledUpdateService, new RecordingLauncherUpdateApplier().Apply, configuredUpdates))
+                cancelledUpdateService, new RecordingLauncherUpdateApplier().Apply, configuredUpdates, new RecordingGameProcessLauncher()))
             {
                 await cancelledUpdateVm.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
                 cancelledUpdateVm.Page = "Settings";
@@ -813,6 +817,7 @@ public static class UiSmoke
                 Check(cancelledUpdateService.CancelledCount == 2 && !cancelledUpdateVm.IsLauncherUpdateReady,
                     "Closing the launcher cancels its pending update download without staging or applying incomplete content");
             }
+            await PlayUiSmoke.RunAsync(window, directory, Check, Render, playBindingEvidence);
             window.DataContext = vm;
             vm.Page = "Home";
             pageScroll.ScrollToTop();
@@ -840,6 +845,8 @@ public static class UiSmoke
             modsQueryServiceIsFake, serverModsBindingEvidence,
             workshopClientIsFake, launcherUpdateServiceIsFake, launcherUpdateApplierIsRecording,
             workshopBindingEvidence, launcherUpdateBindingEvidence,
+            gameProcessLauncherIsRecording = gameProcessLauncher is not null, playBindingEvidence,
+            recordedMainGamePlans = gameProcessLauncher?.Plans, realGameProcessesStarted = false,
             fakeWorkshopCalls = workshopClient?.Calls, realSteamProcessesStarted = false, realUpdateProcessesStarted = false,
             fakeQueryRequests = queryService?.RequestedServers.Select(server => new { server.Id, server.Host, server.GamePort, server.QueryPort }).ToArray(),
             fakeModsQueryRequests = modsQueryService?.RequestedServers.Select(server => new { server.Id, server.Host, server.GamePort, server.QueryPort }).ToArray(),

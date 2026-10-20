@@ -24,7 +24,7 @@ public partial class App : Application
                 smoke ? new FakeServerQueryService() : null, smoke ? new FakeServerModsQueryService() : null,
                 smoke ? new FakeWorkshopClient() : null, smoke ? new FakeLauncherUpdateService() : null,
                 smoke ? new RecordingLauncherUpdateApplier().Apply : null,
-                smoke ? new UpdateConfiguration() : null);
+                smoke ? new UpdateConfiguration() : null, smoke ? new RecordingGameProcessLauncher() : null);
             _viewModel = viewModel;
             await viewModel.InitializeAsync(Path.Combine(AppContext.BaseDirectory, "config", "servers.json"));
             var window = new MainWindow(viewModel);

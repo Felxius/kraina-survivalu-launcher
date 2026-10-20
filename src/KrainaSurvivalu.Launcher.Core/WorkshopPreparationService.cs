@@ -19,14 +19,15 @@ public sealed class WorkshopPreparationService
 
     public Task<WorkshopPreparationResult> InspectAsync(ServerDefinition server, LauncherSettings settings,
         IProgress<WorkshopProgress>? progress = null, CancellationToken cancellationToken = default) =>
-        PrepareAsync(server, settings, false, progress, cancellationToken);
+        PrepareAsync(server, settings, false, progress, cancellationToken, false);
 
     public Task<WorkshopPreparationResult> SynchronizeAsync(ServerDefinition server, LauncherSettings settings,
-        IProgress<WorkshopProgress>? progress = null, CancellationToken cancellationToken = default) =>
-        PrepareAsync(server, settings, true, progress, cancellationToken);
+        IProgress<WorkshopProgress>? progress = null, CancellationToken cancellationToken = default,
+        bool requireResolvableIds = false) =>
+        PrepareAsync(server, settings, true, progress, cancellationToken, requireResolvableIds);
 
     private async Task<WorkshopPreparationResult> PrepareAsync(ServerDefinition server, LauncherSettings settings,
-        bool synchronize, IProgress<WorkshopProgress>? progress, CancellationToken cancellationToken)
+        bool synchronize, IProgress<WorkshopProgress>? progress, CancellationToken cancellationToken, bool requireResolvableIds)
     {
         ArgumentNullException.ThrowIfNull(server);
         cancellationToken.ThrowIfCancellationRequested();
@@ -39,6 +40,13 @@ public sealed class WorkshopPreparationService
         for (var changes = 0; ; changes++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (requireResolvableIds && current.Mods!.Any(mod => !mod.HasWorkshopId))
+            {
+                var unresolved = current.Mods!.Where(mod => !mod.HasWorkshopId).Select(mod => mod.Name);
+                return new(current, null, true,
+                    "Nie można uruchomić gry: serwer nie podaje ID Workshop dla: " + string.Join(", ", unresolved) +
+                    ". Administracja musi uzupełnić te dane. Nie rozpoczęto pobierania z tej listy.");
+            }
             var known = current.Mods!.Where(mod => mod.HasWorkshopId)
                 .GroupBy(mod => NumericId(mod.WorkshopId)).Select(group => group.First() with
                 { WorkshopId = group.Key.ToString(CultureInfo.InvariantCulture) }).ToArray();

@@ -3,7 +3,7 @@ namespace KrainaSurvivalu.Launcher.Core;
 public static class DayZLaunchArguments
 {
     /// <summary>
-    /// Returns one unquoted argument for a future ProcessStartInfo.ArgumentList entry.
+    /// Returns one unquoted argument for a ProcessStartInfo.ArgumentList entry.
     /// Never concatenate this into shell commands, Steam URI strings, or a complete command line.
     /// This method does not launch the game.
     /// </summary>

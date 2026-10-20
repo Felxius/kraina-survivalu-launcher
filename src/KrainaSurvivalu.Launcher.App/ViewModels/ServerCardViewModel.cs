@@ -17,6 +17,11 @@ public sealed class ServerCardViewModel : ObservableObject
     private bool _workshopProgressIndeterminate;
     private IReadOnlyList<LocalWorkshopItemViewModel> _localWorkshopItems = [];
     private WorkshopPreparationResult? _workshopPreparation;
+    private readonly Func<ServerCardViewModel, bool> _canPlay;
+    private readonly Func<ServerCardViewModel, string> _playReason;
+    private bool _isLaunching;
+    private string _launchMessage = "";
+    private string _launchWarning = "";
     public ServerDefinition Server { get; }
     public ServerQueryResult? QueryResult => _queryResult;
     public bool IsChecking => _isChecking;
@@ -119,17 +124,62 @@ public sealed class ServerCardViewModel : ObservableObject
         : WorkshopPreparation is { AllAdvertisedItemsReady: true }
             ? "Rozpoznane mody są gotowe. Kompletność listy serwera wymaga potwierdzenia."
             : "Stan plików zostanie potwierdzony przez Steam po zakończeniu zadania.";
-    public string PlayUnavailableReason => "GRAJ jest niedostępne. Uruchamianie DayZ z przygotowanymi modami jest w kolejnym etapie.";
-    public bool CanPlay => false;
-    public ICommand PlayCommand { get; } = new RelayCommand(_ => { }, _ => false);
+    public string PlayUnavailableReason => _playReason(this);
+    public bool CanPlay => _canPlay(this);
+    public bool IsLaunching => _isLaunching;
+    public string PlayButtonText => IsLaunching ? "PRZYGOTOWYWANIE…" : "GRAJ";
+    public string LaunchMessage => _launchMessage;
+    public bool HasLaunchMessage => !string.IsNullOrWhiteSpace(LaunchMessage);
+    public string LaunchWarning => _launchWarning;
+    public bool HasLaunchWarning => !string.IsNullOrWhiteSpace(LaunchWarning);
+    public RelayCommand PlayCommand { get; }
+    public RelayCommand CancelPlayCommand { get; }
     public ICommand CopyAddressCommand { get; }
     public ICommand OpenModsCommand { get; }
 
-    public ServerCardViewModel(ServerDefinition server, Action<string> copyAddress, Action<ServerCardViewModel> openMods)
+    public ServerCardViewModel(ServerDefinition server, Action<string> copyAddress, Action<ServerCardViewModel> openMods,
+        Action<ServerCardViewModel> play, Func<ServerCardViewModel, bool> canPlay,
+        Func<ServerCardViewModel, string> playReason, Action cancelPlay)
     {
         Server = server;
+        _canPlay = canPlay;
+        _playReason = playReason;
+        PlayCommand = new RelayCommand(_ => play(this), _ => CanPlay);
+        CancelPlayCommand = new RelayCommand(_ => cancelPlay(), _ => IsLaunching);
         CopyAddressCommand = new RelayCommand(_ => copyAddress(Endpoint));
         OpenModsCommand = new RelayCommand(_ => openMods(this));
+    }
+    internal void BeginLaunch()
+    {
+        _isLaunching = true;
+        _launchMessage = "Odczytywanie wymagań serwera i przygotowywanie DayZ…";
+        _launchWarning = "";
+        NotifyLaunchProperties();
+    }
+    internal void SetLaunchFeedback(string message, string? warning = null)
+    {
+        _launchMessage = message;
+        if (warning is not null) _launchWarning = warning;
+        NotifyLaunchProperties();
+    }
+    internal void EndLaunch()
+    {
+        _isLaunching = false;
+        NotifyLaunchProperties();
+    }
+    internal void RefreshPlayAvailability()
+    {
+        OnPropertyChanged(nameof(CanPlay));
+        OnPropertyChanged(nameof(PlayUnavailableReason));
+        PlayCommand.Refresh();
+        CancelPlayCommand.Refresh();
+    }
+    private void NotifyLaunchProperties()
+    {
+        foreach (var property in new[] { nameof(IsLaunching), nameof(PlayButtonText), nameof(LaunchMessage),
+            nameof(HasLaunchMessage), nameof(LaunchWarning), nameof(HasLaunchWarning) })
+            OnPropertyChanged(property);
+        RefreshPlayAvailability();
     }
     internal void BeginQuery()
     {
@@ -233,6 +283,7 @@ public sealed class ServerCardViewModel : ObservableObject
             nameof(ModsStatusText), nameof(ModsMessage), nameof(ModsCount), nameof(ModsLastCheckedMessage), nameof(ModsDetails),
             nameof(ModsExplanation), nameof(ModsEmptyMessage) })
             OnPropertyChanged(property);
+        RefreshPlayAvailability();
     }
     private void NotifyQueryProperties()
     {

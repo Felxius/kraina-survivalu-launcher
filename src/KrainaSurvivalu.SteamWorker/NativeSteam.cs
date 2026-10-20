@@ -226,7 +226,7 @@ internal sealed class NativeSteam : IDisposable
     private static List<string> ContentRoots(string dayz, string steam)
     {
         var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var gameApps = Directory.GetParent(dayz)?.Parent;
+        var gameApps = Directory.GetParent(Path.TrimEndingDirectorySeparator(Path.GetFullPath(dayz)))?.Parent;
         if (gameApps is not null && string.Equals(gameApps.Name, "steamapps", StringComparison.OrdinalIgnoreCase))
             roots.Add(Path.Combine(gameApps.FullName, "workshop", "content", "221100"));
         roots.Add(Path.Combine(Path.GetDirectoryName(steam)!, "steamapps", "workshop", "content", "221100"));

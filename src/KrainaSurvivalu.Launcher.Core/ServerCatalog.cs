@@ -61,7 +61,7 @@ public static class ServerCatalog
         return result.AsReadOnly();
     }
 
-    private static void Validate(ServerDefinition server)
+    internal static void Validate(ServerDefinition server)
     {
         if (string.IsNullOrEmpty(server.Id) || server.Id.Length > 64 ||
             server.Id.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_'))

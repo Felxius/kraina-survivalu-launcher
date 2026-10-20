@@ -1,8 +1,12 @@
-# Kontrola wydania 0.6
+# Kontrola wydania 0.7
+
+Kontrola z 20 października 2026 dla `win-x64-0.7.0-play-review-02`: **132 testy Core, 48 aktualizatora i 103 kontrole WPF — bez niepowodzeń**. Jeden test utworzenia rzeczywistego dowiązania katalogu został jawnie pominięty z powodu odmowy Windows (Win32 1314). Kompilacja zakończyła się bez ostrzeżeń i błędów. Rzeczywisty render WPF nie zgłosił błędów powiązań, a wszystkie 791 plików publikacji pozostały niezmienione. Test GRAJ używa rejestratora zamiast uruchamiania procesu; skonstruowano także parametry rzeczywistego adaptera bez startu gry. Rzeczywiste pobieranie Steam i wejście do serwera z tej paczki pozostają próbą użytkownika.
+
+Raporty: `artifacts/testing/play-core-review-02-report.json`, `play-updater-review-02-report.json`, `build-publish-play-review-02-report.json` oraz `artifacts/ui-smoke-sync-release-play-02/ui-smoke.json` i `execution.json`. Pierwsza próba UI zachowuje jeden nieudany test niespójnej wersji atrapy aktualizacji; poprawiona druga próba obejmuje całość, w tym regresję anulowania po przekazaniu startu gry. Nie zastąpiono dowodów pierwszej próby.
 
 Kontrola z 19 października 2026: 106 grup testów Core, 48 testów aktualizatora i 85 kontroli WPF zakończonych sukcesem. Test utworzenia rzeczywistego dowiązania katalogu został jawnie pominięty: Windows odmówił uprawnienia (Win32 1314). Testy odrzucania dowiązań zapisanych w ZIP-ie przeszły. WPF nie zgłosił błędów powiązań, a publikacja po teście pozostała bez zmian. Raporty odnoszą się do `win-x64-0.6.0-sync-review-04`.
 
-Osobny test w zwykłej sesji użytkownika potwierdził połączenie roboczego pomocnika z zalogowanym Steam i stan zainstalowanego CF; manifest Workshop pozostał niezmieniony. Ten odczyt nie jest testem pobierania i nie należy przedstawiać go jako uruchomienia całej finalnej paczki. Rzeczywiste pobieranie brakującego moda i aktualizacja pomiędzy dwoma opublikowanymi wydaniami wymagają dalszych prób. Nie utworzono repozytorium GitHub ani trwałego klucza publikacji.
+Osobny test w zwykłej sesji użytkownika potwierdził połączenie roboczego pomocnika z zalogowanym Steam i stan zainstalowanego CF; manifest Workshop pozostał niezmieniony. Ten odczyt nie jest testem pobierania i nie należy przedstawiać go jako uruchomienia całej finalnej paczki. Rzeczywiste pobieranie brakującego moda i aktualizacja pomiędzy dwoma opublikowanymi wydaniami wymagają dalszych prób. Repozytorium Felxius/kraina-survivalu-launcher i klucz są skonfigurowane. GitHub zbudował szkic 0.6.1-alpha; podpis, rozmiar i SHA pobranego ZIP-a oraz 85 testów jego WPF przeszły bez błędów. To nie jest test publicznej aktualizacji ani wejścia do gry.
 
 ## Aplikacja i profil
 
@@ -10,7 +14,7 @@ Osobny test w zwykłej sesji użytkownika potwierdził połączenie roboczego po
 2. Uruchom `--ui-smoke` na opublikowanym EXE z osobnym folderem ustawień. Zachowaj raport, obrazy i pełny odcisk publikacji; po teście pliki aplikacji muszą być niezmienione.
 3. Sprawdź stronę główną, ustawienia i regulamin przy skalowaniu 100%, 125% i 150%, w minimalnym rozmiarze okna oraz z długą treścią. Ikona ma być widoczna w EXE i oknie; obie ilustracje muszą się ładować.
 4. Zapisz poprawny nick z polskimi znakami, zamknij aplikację i sprawdź odczyt. Zweryfikuj pusty nick, `Survivor`, przekroczenie 32 znaków Unicode, cudzysłowy i znaki sterujące. Przy migracji starych ustawień zachowaj ścieżki i traktuj brak nicku jako nieustawiony.
-5. Upewnij się, że nick nie jest przedstawiany jako przekazany do gry. GRAJ pozostaje niedostępne; synchronizacja rozpoznanych ID jest dostępna osobnym przyciskiem.
+5. Sprawdź GRAJ z atrapą procesu: właściwy serwer, port gry (nie Query), nick, kolejność ścieżek i jeden argument `-mod`. Start procesu nie może być opisany jako potwierdzone wejście do serwera.
 6. Potwierdź Badlands: gra `145.239.237.112:27800`, Query `27801`; Deer Isle: gra `178.95.158.100:23000`, Query `9000`. Statyczne `requiredWorkshopIds` pozostają `null`; dynamicznych wyników nie wpisujemy do tego pola.
 
 ## Status Query
@@ -26,7 +30,7 @@ Osobny test w zwykłej sesji użytkownika potwierdził połączenie roboczego po
 2. Sprawdź challenge INFO i odczyt RULES z tym samym cookie oraz gniazdem UDP. Kontrole Core obejmują również błędne i brakujące strony, limity danych, nieobsługiwany format i anulowanie.
 3. ID 0 ma zostać widoczne jako nierozpoznany/lokalny mod, bez zamiany na fikcyjne ID Workshop. Nieznana flaga odpowiedzi musi pozostawić listę widoczną, ale blokować deklarację potwierdzonej kompletności. Kompletne strony transmisji nie oznaczają kompletnej listy wymaganej do gry.
 4. Timeout lub błędna odpowiedź czyści poprzednie pozycje tego serwera zamiast przedstawiać stare dane jako nowy sukces. Nie wpływa na ostatni wynik drugiego serwera. Zamknięcie aplikacji anuluje oczekiwanie.
-5. Testy UI używają atrap i kontrolowanych nazw/ID. Osobny raport żywego odczytu musi wskazywać dokładne endpointy i SHA opublikowanej biblioteki Core oraz konfiguracji. Nie są to testy instalacji ani pobierania modów; GRAJ pozostaje zablokowane.
+5. Testy UI używają atrap i kontrolowanych nazw/ID. Osobny raport żywego odczytu musi wskazywać dokładne endpointy i SHA opublikowanej biblioteki Core oraz konfiguracji. Nie są to testy instalacji ani pobierania modów i nie dowodzą uruchomienia rzeczywistego DayZ.
 
 ## Synchronizacja i aktualizacje
 
@@ -35,6 +39,14 @@ Osobny test w zwykłej sesji użytkownika potwierdził połączenie roboczego po
 3. Gotowość wymaga stanu Steam Installed bez NeedsUpdate/Downloading/DownloadPending i poprawnego folderu instalacji. Samo przyjęcie subskrypcji lub pobierania nie oznacza sukcesu.
 4. Testy aktualizatora używają atrap HTTP, kluczy tylko w pamięci i tymczasowych instalacji. Sprawdzają podpis, hash, wersję, kompletność paczki, ścieżki ZIP, limit danych, blokadę równoległej wymiany i przywrócenie po błędzie. Nie publikują wydania.
 5. Przy pustym `updates.json` aplikacja nie kontaktuje się z GitHub. Po konfiguracji dwóch rzeczywistych wydań sprawdź pobranie, restart i zachowanie profilu gracza; instrukcja w [AKTUALIZACJE.md](AKTUALIZACJE.md).
+
+## GRAJ: próba na komputerze gracza
+
+1. Użyj nowej pełnej paczki 0.7, zapisz ścieżki i własny nick, zaloguj Steam i zamknij poprzednie DayZ.
+2. Kliknij GRAJ przy Deer Isle. Zapisz wynik odczytu, postęp Steam i ewentualny dokładny komunikat błędu. Test może pobrać rzeczywiste mody; wymaga internetu i miejsca na dysku.
+3. Potwierdź uruchomienie BattlEye, widoczny nick i faktyczne wejście na właściwy serwer. Sam proces nie oznacza zaliczenia tej próby.
+4. Przy niegotowych modach anuluj przygotowanie; gra nie może się uruchomić. Przy działającej grze następny GRAJ nie może uruchomić drugiej kopii.
+5. Jeżeli serwer zgłasza ID 0, sprawdź blokadę z nazwą wymagania. Nie zastępuj ID domysłem. Przy nieznanej fladze sprawdź widoczne ostrzeżenie, bez deklaracji kompletności.
 
 ## Społeczność i dane
 

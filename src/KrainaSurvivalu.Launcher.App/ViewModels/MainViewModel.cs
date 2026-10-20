@@ -29,6 +29,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private string _validationMessage = "Ścieżki nie zostały jeszcze sprawdzone.";
     private ServerCardViewModel? _selectedModsServer;
     private readonly WorkshopPreparationService _workshopPreparationService;
+    private readonly DayZPlayService _playService;
     private readonly Action<StagedLauncherUpdate> _applyLauncherUpdate;
     private readonly UpdateConfiguration? _injectedUpdateConfiguration;
     private UpdateConfiguration _updateConfiguration = new();
@@ -63,6 +64,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     internal IServerQueryService QueryService { get; }
     internal IServerModsQueryService ModsQueryService { get; }
     internal IWorkshopClient WorkshopClient { get; }
+    internal IGameProcessLauncher GameProcessLauncher { get; }
     internal ILauncherUpdateService LauncherUpdateService { get; }
     internal Action<StagedLauncherUpdate> LauncherUpdateApplier => _applyLauncherUpdate;
     public bool IsWorkshopBusy => _activeWorkshopServer is not null;
@@ -97,8 +99,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         "Settings" => "Nick gracza oraz instalacja DayZ i Steam.",
         _ => "Wybierz swój serwer Krainy Survivalu."
     };
-    public string DayZDirectory { get => _dayZDirectory; set => Set(ref _dayZDirectory, value); }
-    public string SteamExecutable { get => _steamExecutable; set => Set(ref _steamExecutable, value); }
+    public string DayZDirectory { get => _dayZDirectory; set { if (Set(ref _dayZDirectory, value)) RefreshPlayCommands(); } }
+    public string SteamExecutable { get => _steamExecutable; set { if (Set(ref _steamExecutable, value)) RefreshPlayCommands(); } }
     public string PlayerName
     {
         get => _playerName;
@@ -106,6 +108,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         {
             if (!Set(ref _playerName, value)) return;
             OnPropertyChanged(nameof(PlayerNameMessage));
+            RefreshPlayCommands();
         }
     }
     public string PlayerNameMessage => string.IsNullOrWhiteSpace(PlayerName)
@@ -137,7 +140,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public MainViewModel(string settingsPath, IExternalLinkOpener? linkOpener = null, IServerQueryService? queryService = null,
         IServerModsQueryService? modsQueryService = null, IWorkshopClient? workshopClient = null,
         ILauncherUpdateService? launcherUpdateService = null, Action<StagedLauncherUpdate>? applyLauncherUpdate = null,
-        UpdateConfiguration? updateConfiguration = null)
+        UpdateConfiguration? updateConfiguration = null, IGameProcessLauncher? gameProcessLauncher = null)
     {
         SettingsPath = settingsPath;
         _settingsStore = new SettingsStore(settingsPath);
@@ -146,6 +149,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ModsQueryService = modsQueryService ?? new SteamServerModsQueryService();
         WorkshopClient = workshopClient ?? new SteamWorkshopClient();
         _workshopPreparationService = new WorkshopPreparationService(ModsQueryService, WorkshopClient);
+        GameProcessLauncher = gameProcessLauncher ?? new DayZProcessLauncher();
+        _playService = new DayZPlayService(_workshopPreparationService, GameProcessLauncher);
         LauncherUpdateService = launcherUpdateService ?? new GitHubLauncherUpdateService();
         _applyLauncherUpdate = applyLauncherUpdate ?? ApplyLauncherUpdateAndRestart;
         _injectedUpdateConfiguration = updateConfiguration;
@@ -174,7 +179,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         SelectedModsServer = null;
         Servers.Clear();
         foreach (var server in servers)
-            Servers.Add(new ServerCardViewModel(server, CopyAddress, selected => { SelectedModsServer = selected; Page = "Mods"; }));
+            Servers.Add(new ServerCardViewModel(server, CopyAddress, selected => { SelectedModsServer = selected; Page = "Mods"; },
+                selected => { _ = PlaySafelyAsync(selected); }, CanPlay, PlayReason, () => _workshopCancellation?.Cancel()));
         SelectedModsServer = Servers.FirstOrDefault();
         var loaded = await _settingsStore.LoadAsync();
         DayZDirectory = loaded.Settings.DayZDirectory;
@@ -188,6 +194,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public LauncherSettings CurrentSettings => new() { DayZDirectory = DayZDirectory.Trim(), SteamExecutable = SteamExecutable.Trim(), PlayerName = PlayerName.Trim() };
     private void SelectedModsServer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is not (nameof(ServerCardViewModel.ModsQueryResult) or nameof(ServerCardViewModel.IsCheckingMods)
+            or nameof(ServerCardViewModel.WorkshopMods) or nameof(ServerCardViewModel.ModsMessage)
+            or nameof(ServerCardViewModel.ModsCount) or nameof(ServerCardViewModel.IsWorkshopBusy))) return;
         OnPropertyChanged(nameof(SelectedModsMessage));
         OnPropertyChanged(nameof(SelectedWorkshopIds));
         OnPropertyChanged(nameof(SelectedModsCount));
@@ -223,6 +232,87 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         SynchronizeWorkshopCommand.Refresh();
         CancelWorkshopCommand.Refresh();
         ApplyLauncherUpdateCommand.Refresh();
+        RefreshPlayCommands();
+    }
+    private bool CanPlay(ServerCardViewModel server) => !_disposed && !IsWorkshopBusy && !IsUpdatingLauncher &&
+        !server.IsCheckingMods && Servers.Contains(server) &&
+        PlayerNameValidation.Validate(CurrentSettings.PlayerName).IsValid && PathValidation.Validate(CurrentSettings).IsValid;
+    private string PlayReason(ServerCardViewModel server)
+    {
+        if (_disposed) return "Launcher jest zamykany.";
+        if (IsWorkshopBusy) return "Poczekaj na bieżące zadanie lub je anuluj.";
+        if (IsUpdatingLauncher) return "Poczekaj na przygotowanie aktualizacji launchera.";
+        if (server.IsCheckingMods) return "Trwa odczyt listy modów tego serwera.";
+        var settings = CurrentSettings;
+        var nameValidation = PlayerNameValidation.Validate(settings.PlayerName);
+        if (!nameValidation.IsValid) return "Uzupełnij poprawny nick gracza. " + nameValidation.Message;
+        var paths = PathValidation.Validate(settings);
+        return !paths.IsValid ? "Ustaw poprawne ścieżki DayZ i Steam. " + paths.Message
+            : "Sprawdź i pobierz wymagane mody przez Steam, a następnie uruchom DayZ z tym nickiem i adresem serwera.";
+    }
+    private void RefreshPlayCommands()
+    {
+        foreach (var server in Servers) server.RefreshPlayAvailability();
+    }
+    public async Task PlayAsync(ServerCardViewModel server, CancellationToken cancellationToken = default)
+    {
+        if (!CanPlay(server)) return;
+        cancellationToken.ThrowIfCancellationRequested();
+        var settings = CurrentSettings;
+        using var operation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _queryCancellation.Token);
+        _workshopCancellation = operation;
+        _activeWorkshopServer = server;
+        OnPropertyChanged(nameof(IsWorkshopBusy));
+        server.BeginWorkshopOperation("Sprawdzanie wymagań przed uruchomieniem gry…", true);
+        server.BeginLaunch();
+        Message = server.Name + ": przygotowywanie gry…";
+        RefreshServerModsCommand.Refresh();
+        RefreshWorkshopCommands();
+        var progress = new Progress<WorkshopProgress>(value =>
+        {
+            if (_disposed || !ReferenceEquals(_workshopCancellation, operation) || !server.IsLaunching) return;
+            server.ApplyWorkshopProgress(value);
+            server.SetLaunchFeedback(value.Message);
+        });
+        try
+        {
+            var result = await _playService.PlayAsync(server.Server, settings, progress, operation.Token);
+            // A cancellation delivered after Process.Start cannot undo a completed handoff.
+            if (!result.Started) operation.Token.ThrowIfCancellationRequested();
+            if (result.Preparation is { } preparation) server.ApplyWorkshopPreparation(preparation);
+            var warning = result.Preparation?.ServerMods is { Flags: not 0 }
+                ? "Serwer zwraca dodatkowe, niezweryfikowane flagi; kompletność odczytanej listy wymaga potwierdzenia."
+                : "";
+            server.SetLaunchFeedback(result.Message, warning);
+            Message = server.Name + ": " + result.Message;
+        }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested)
+        {
+            server.SetLaunchFeedback("Anulowano przygotowanie gry. Pobieranie już zlecone Steam może być nadal kontynuowane przez Steam.");
+            if (!_disposed) Message = server.Name + ": anulowano przygotowanie gry.";
+            throw;
+        }
+        catch (Exception error)
+        {
+            server.SetLaunchFeedback("Nie udało się uruchomić DayZ: " + error.Message);
+            throw;
+        }
+        finally
+        {
+            server.EndWorkshopOperation(server.LaunchMessage);
+            server.EndLaunch();
+            _activeWorkshopServer = null;
+            _workshopCancellation = null;
+            OnPropertyChanged(nameof(IsWorkshopBusy));
+            RefreshServerModsCommand.Refresh();
+            RefreshWorkshopCommands();
+        }
+    }
+    private async Task PlaySafelyAsync(ServerCardViewModel server)
+    {
+        try { await PlayAsync(server); }
+        catch (OperationCanceledException) { }
+        catch (Exception error) { ShowError(error); }
     }
     public async Task PrepareWorkshopAsync(bool synchronize, CancellationToken cancellationToken = default)
     {
@@ -366,6 +456,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         CheckLauncherUpdatesCommand.Refresh();
         CancelLauncherUpdateCommand.Refresh();
         ApplyLauncherUpdateCommand.Refresh();
+        RefreshPlayCommands();
     }
     private void ApplyPreparedLauncherUpdate()
     {

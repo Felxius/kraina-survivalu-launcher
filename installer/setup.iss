@@ -1,10 +1,10 @@
 ﻿; Kompilacja: scripts/Build-Installer.ps1 -IsccPath "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 ; Wymagany Inno Setup 6. Skrypt nie pobiera runtime ani aktualizacji.
 #ifndef AppVersion
-  #define AppVersion "0.6.0-alpha"
+  #define AppVersion "0.7.0-alpha"
 #endif
 #ifndef AppFileVersion
-  #define AppFileVersion "0.6.0.0"
+  #define AppFileVersion "0.7.0.0"
 #endif
 #ifndef PublishDir
   #error "Podaj /DPublishDir ze ścieżką do świeżej publikacji self-contained win-x64."

@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$IsccPath,
     [string]$DotNetPath,
-    [ValidatePattern('^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')][string]$Version = '0.6.0-alpha',
+    [ValidatePattern('^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')][string]$Version = '0.7.0-alpha',
     [string]$RestoreConfigFile,
     [string]$PublishDirectory,
     [string]$OutputDirectory = 'artifacts/installer'

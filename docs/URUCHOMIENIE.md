@@ -5,7 +5,7 @@
 1. Rozpakuj pełną paczkę Windows x64 do zapisywalnego folderu. Zachowaj wszystkie pliki i podfoldery, zwłaszcza `config`, `SteamWorker` i `Updater`.
 2. Uruchom `KrainaSurvivalu.Launcher.exe`. Nie wymaga osobnej instalacji .NET — gotowa publikacja zawiera runtime.
 3. W **Ustawieniach** wskaż folder z `DayZ_x64.exe` i `DayZ_BE.exe` oraz plik `steam.exe`. Możesz skorzystać z wykrywania instalacji, sprawdzić ścieżki i zapisać ustawienia.
-4. Wpisz własny nick. Zapis jest lokalny; przycisk GRAJ i przekazanie nicku do DayZ pozostają niedostępne w etapie 0.6.
+4. Wpisz i zapisz własny nick. GRAJ przekaże go do gry; pusty nick i `Survivor` wstrzymują przygotowanie.
 5. Uruchom Steam i zaloguj się na konto posiadające DayZ. Steam oraz launcher uruchamiaj jako ten sam użytkownik, z takim samym poziomem uprawnień.
 
 Nie przenoś samego EXE. Brak pomocnika Steam lub aktualizatora jest zgłaszany jako brak plików paczki, a nie sukces operacji.
@@ -22,6 +22,14 @@ Pobieranie nie zaczyna się od samego przeglądania strony. Przed synchronizacj�
 
 Status „gotowy” wymaga potwierdzenia końcowego stanu Steam. Samo przyjęcie pobierania do kolejki nie wystarcza. Mod z ID `0` wymaga informacji od administracji. Nieznane flagi listy serwera, np. `0x08`, pozostawiają kompletność niepotwierdzoną. Można synchronizować rozpoznane ID, lecz nie jest to potwierdzenie pełnej listy potrzebnej do gry. Zobacz [MODY.md](MODY.md).
 
+## Przycisk GRAJ
+
+Zamknij poprzednią grę, zostaw Steam uruchomiony i kliknij **GRAJ** przy wybranym serwerze. W czasie przygotowania launcher pokazuje postęp; można anulować własne zadanie. Steam może dokończyć wcześniej zlecone pobieranie. Launcher sprawdza pliki i ponownie odczytuje wymagania, a następnie uruchamia `DayZ_BE.exe` z adresem, portem gry, nickiem i ścieżkami modów. Nie uruchamia drugiej kopii gry ani nie wyłącza BattlEye.
+
+Gdy serwer zwraca pozycję bez ID Workshop, GRAJ wyświetla jej nazwę i wstrzymuje start. Administrator musi wyjaśnić wymaganie — launcher nie zgaduje ID. Nieznana flaga odpowiedzi pozostawia widoczne ostrzeżenie o kompletności; przy dodatnich ID i gotowych plikach można podjąć próbę wejścia z odczytanymi modami. Ostateczne przyjęcie połączenia należy do DayZ i serwera. Jeśli gra zgłasza brak moda, zachowaj dokładny komunikat.
+
+Po pierwszym uruchomieniu BattlEye może wymagać zaakceptowania swoich warunków. Launcher nie potwierdza ich za gracza. Ścieżki biblioteki zawierające średnik lub cudzysłów oraz dowiązania folderów Workshop nie są obsługiwane. Długie ścieżki można skrócić przez przeniesienie biblioteki w ustawieniach Steam.
+
 ## Jeśli połączenie ze Steam nie działa
 
 Sprawdź wybraną instalację DayZ i Steam, zalogowane konto, posiadanie DayZ oraz uprawnienia obu procesów. Pomocnik potrzebuje prawidłowej biblioteki Valve `steam_api64.dll` z zainstalowanego DayZ. Nie pobieraj przypadkowych DLL z internetu ani nie kopiuj ich z innego programu. W razie brakujących plików zweryfikuj instalację DayZ w Steam.
@@ -30,7 +38,7 @@ Proces pomocnika może nie mieć dostępu do sesji Steam w odizolowanym środowi
 
 ## Aktualizacja samego launchera
 
-Roboczy projekt zawiera już konfigurację `Felxius/kraina-survivalu-launcher` i publiczny klucz. Dopóki administracja nie wyśle źródeł, nie ustawi sekretu i nie opublikuje pierwszego wydania, sprawdzanie aktualizacji może zgłaszać brak dostępnego wydania. Wcześniejszy ZIP 0.6 pozostaje nieskonfigurowany; nie został podmieniony.
+Projekt zawiera konfigurację `Felxius/kraina-survivalu-launcher` i publiczny klucz. Sekret GitHub jest ustawiony, a pierwsza paczka 0.6.1-alpha została zbudowana i sprawdzona jako szkic wydania. Dopóki nie ma publicznego wydania, launcher może zgłaszać brak aktualizacji. Wcześniejszy lokalny ZIP 0.6.0 pozostaje nieskonfigurowany; nie został podmieniony.
 
 Po przygotowaniu źródła przez administrację launcher przy starcie sprawdzi nową wersję i pobierze ją z pokazaniem postępu. Sprawdzi podpis manifestu, rozmiar oraz SHA-256 paczki. Po pobraniu wybierz **ZAINSTALUJ I URUCHOM PONOWNIE**. Pomocnik poczeka na zamknięcie launchera, wymieni pliki i uruchomi nową wersję. Nie zamknie gry ani Steam. Nick, ustawienia i biblioteki Workshop pozostają poza wymienianymi plikami.
 

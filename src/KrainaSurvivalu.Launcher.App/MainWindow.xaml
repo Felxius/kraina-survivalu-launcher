@@ -21,7 +21,7 @@
      </Grid>
     </Border>
     <Grid Grid.Column="1" Margin="32,20,22,15"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <Grid Margin="0,0,10,23"><StackPanel><TextBlock x:Name="PageHeading" Text="{Binding PageTitle}" FontSize="25" FontWeight="SemiBold"/><TextBlock Text="{Binding PageSubtitle}" Style="{StaticResource Muted}" Margin="0,6,0,0"/></StackPanel><Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#202A1D" BorderBrush="#3A4A30" BorderThickness="1" CornerRadius="5" Padding="10,7"><TextBlock Text="ETAP 06" Style="{StaticResource Eyebrow}" FontSize="9"/></Border></Grid>
+     <Grid Margin="0,0,10,23"><StackPanel><TextBlock x:Name="PageHeading" Text="{Binding PageTitle}" FontSize="25" FontWeight="SemiBold"/><TextBlock Text="{Binding PageSubtitle}" Style="{StaticResource Muted}" Margin="0,6,0,0"/></StackPanel><Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#202A1D" BorderBrush="#3A4A30" BorderThickness="1" CornerRadius="5" Padding="10,7"><TextBlock Text="ETAP 07" Style="{StaticResource Eyebrow}" FontSize="9"/></Border></Grid>
      <ScrollViewer x:Name="MainPageScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0">
       <Grid>
        <StackPanel Visibility="{Binding IsHomePage, Converter={StaticResource BoolVisibility}}">
@@ -35,7 +35,7 @@
         </Border>
         <Grid Margin="0,0,12,14"><TextBlock Text="WYBIERZ SERWER" Style="{StaticResource Eyebrow}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/><Button x:Name="RefreshServersButton" Content="ODŚWIEŻ STATUS" Command="{Binding RefreshServerStatusCommand}" Style="{StaticResource SmallButton}" HorizontalAlignment="Right" AutomationProperties.Name="Odśwież status obu serwerów"/></Grid>
         <ItemsControl x:Name="ServerCards" ItemsSource="{Binding Servers}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><views:ServerCard/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-        <Border Background="#181F17" BorderBrush="#34412D" BorderThickness="1" CornerRadius="7" Padding="15,12" Margin="0,18,12,8"><TextBlock Text="Status odświeża się co minutę. Brak odpowiedzi oznacza, że nie udało się potwierdzić dostępności serwera. Mody sprawdzisz i pobierzesz w ich profilu. Uruchamianie gry jest jeszcze niedostępne." Style="{StaticResource Muted}" FontSize="11"/></Border>
+        <Border Background="#181F17" BorderBrush="#34412D" BorderThickness="1" CornerRadius="7" Padding="15,12" Margin="0,18,12,8"><TextBlock Text="GRAJ sprawdza aktualną listę serwera, pobiera lub aktualizuje wymagane mody przez Steam i uruchamia DayZ z Twoim nickiem. Steam musi działać i być zalogowany. Status serwerów odświeża się co minutę." Style="{StaticResource Muted}" FontSize="11"/></Border>
        </StackPanel>
        <StackPanel Visibility="{Binding IsModsPage, Converter={StaticResource BoolVisibility}}" Margin="0,0,12,0">
         <Border Style="{StaticResource Panel}" Padding="25"><StackPanel>
